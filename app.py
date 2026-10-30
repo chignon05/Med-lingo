@@ -155,7 +155,6 @@ st.markdown("""
     /* -------------------------------------------------------------
        선지 네모 박스 스타일링
        ------------------------------------------------------------- */
-    /* Streamlit Radio 상단 제목 라벨 리셋 (네모 박스 해제, 굵은 텍스트) */
     div[data-testid="stRadio"] > label,
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] {
         background: transparent !important;
@@ -173,7 +172,6 @@ st.markdown("""
         background: transparent !important;
     }
 
-    /* Streamlit Radio 실제 선택 옵션 항목들만 카드형 네모 박스로 변경 */
     div[data-testid="stRadio"] div[role="radiogroup"] {
         display: flex;
         flex-direction: column;
@@ -196,7 +194,6 @@ st.markdown("""
         background-color: #F0FDF4 !important;
     }
     
-    /* 풀기 전 선택된 선지 (초록색 하이라이트) */
     div[data-testid="stRadio"] div[role="radiogroup"] label[data-checked="true"],
     div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
         border-color: #10B981 !important;
@@ -206,7 +203,6 @@ st.markdown("""
         box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15) !important;
     }
 
-    /* 정답 확인 후: 정답 선지 (파란색 박스 + 맞춤 표시) */
     .choice-card-correct {
         background-color: #EFF6FF !important;
         border: 2px solid #2563EB !important;
@@ -222,7 +218,6 @@ st.markdown("""
         animation: fadeIn 0.3s ease;
     }
 
-    /* 정답 확인 후: 내가 선택한 오답 선지 (빨간색 박스 + 틀림 표시) */
     .choice-card-wrong {
         background-color: #FEF2F2 !important;
         border: 2px solid #EF4444 !important;
@@ -238,7 +233,6 @@ st.markdown("""
         animation: fadeIn 0.3s ease;
     }
 
-    /* 정답 확인 후: 선택하지 않은 다른 오답 선지 */
     .choice-card-dimmed {
         background-color: #F8FAFC !important;
         border: 1.5px solid #E2E8F0 !important;
@@ -248,12 +242,11 @@ st.markdown("""
         color: #64748B;
         opacity: 0.85;
     }
-
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# 1. 기본 기출 데이터셋 (파일별 출처 명시: source_file)
+# 1. 기출 데이터베이스 로드
 # -------------------------------------------------------------
 DEFAULT_QUESTIONS = []
 
@@ -262,7 +255,6 @@ def load_database():
         try:
             with open("questions_db.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # Ensure source_file key exists
                 for item in data:
                     if "source_file" not in item:
                         item["source_file"] = f"{item.get('year', '')}_{item.get('subject', '기출문제')}.pdf"
@@ -274,7 +266,7 @@ def load_database():
 questions_pool = load_database()
 
 # -------------------------------------------------------------
-# 2. 유연한 단답형 정답 판별 함수 (Fuzzy Normalization)
+# 2. 유연한 단답형 정답 판별 함수
 # -------------------------------------------------------------
 def check_short_answer(user_input: str, target_answer: str) -> bool:
     if not user_input or not target_answer:
@@ -296,10 +288,8 @@ def check_short_answer(user_input: str, target_answer: str) -> bool:
 # -------------------------------------------------------------
 # 3. 세션 상태 관리
 # -------------------------------------------------------------
-# 화면 라우트: 'home' | 'selector' | 'quiz'
 if "current_page" not in st.session_state:
     st.session_state.current_page = "home"
-
 if "current_idx" not in st.session_state:
     st.session_state.current_idx = 0
 if "answered_state" not in st.session_state:
@@ -308,6 +298,8 @@ if "user_selected_ans" not in st.session_state:
     st.session_state.user_selected_ans = ""
 if "is_correct" not in st.session_state:
     st.session_state.is_correct = False
+if "is_skipped" not in st.session_state:
+    st.session_state.is_skipped = False
 if "starred_ids" not in st.session_state:
     st.session_state.starred_ids = set()
 if "wrong_ids" not in st.session_state:
@@ -319,41 +311,42 @@ if "streak" not in st.session_state:
 if "show_ai" not in st.session_state:
     st.session_state.show_ai = False
 
-# 필터 상태
+# 필터 및 풀이 풀 상태 관리
 if "filter_source_file" not in st.session_state:
     st.session_state.filter_source_file = "전체 파일 보기"
-if "filter_subject" not in st.session_state:
-    st.session_state.filter_subject = "전체 과목"
-if "filter_years" not in st.session_state:
-    st.session_state.filter_years = []
-if "filter_profs" not in st.session_state:
-    st.session_state.filter_profs = []
 if "study_mode" not in st.session_state:
     st.session_state.study_mode = "전체 기출"
+if "active_custom_pool" not in st.session_state:
+    st.session_state.active_custom_pool = None
 
 def go_home():
     st.session_state.current_page = "home"
     st.session_state.answered_state = False
+    st.session_state.is_skipped = False
     st.session_state.show_ai = False
 
 def go_selector():
     st.session_state.current_page = "selector"
     st.session_state.answered_state = False
+    st.session_state.is_skipped = False
     st.session_state.show_ai = False
 
-def start_quiz(idx=0):
+def start_quiz(idx=0, custom_pool=None):
     st.session_state.current_idx = idx
+    if custom_pool is not None:
+        st.session_state.active_custom_pool = custom_pool
     st.session_state.current_page = "quiz"
     st.session_state.answered_state = False
+    st.session_state.is_skipped = False
     st.session_state.show_ai = False
     st.session_state.user_selected_ans = ""
 
 # -------------------------------------------------------------
-# 4. 상단 네비게이션 헤더 (어디서나 Med-Lingo를 눌러 홈으로 이동)
+# 4. 상단 네비게이션 헤더
 # -------------------------------------------------------------
 col_h1, col_h2, col_h3 = st.columns([4, 4, 4])
 with col_h1:
-    if st.button("⚡ Med-Lingo (홈으로)", key="global_home_btn", use_container_width=False):
+    if st.button("⚡ Med-Lingo", key="global_home_btn", use_container_width=False):
         go_home()
         st.rerun()
 
@@ -380,15 +373,14 @@ if st.session_state.current_page == "home":
     st.markdown("""
     <div class="hero-card">
         <div style="font-size: 48px; margin-bottom: 8px;">🩺</div>
-        <div class="hero-title">Med-Lingo 기출 마스터</div>
+        <div class="hero-title">Med-Lingo</div>
         <div class="hero-sub">
-            방대한 의대 족보와 기출문제를 듀오링고처럼 가볍고 확실하게 정복하세요.<br>
-            파일별, 교수님별, 년도별로 큐레이션된 문항을 풀고 AI 핵심 기전으로 단권화하세요.
+            Jokbo-Based Learning<br>
+            의대 족보와 기출문제를 듀오링고처럼 가볍고 확실하게 정복하세요.
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # 빅 메인 액션 버튼
     c_btn1, c_btn2, c_btn3 = st.columns([3, 4, 3])
     with c_btn2:
         if st.button("🚀 Med-Lingo 기출 풀러가기", type="primary", use_container_width=True):
@@ -431,11 +423,11 @@ if st.session_state.current_page == "home":
     st.markdown("### 💡 주요 기능 가이드")
     g1, g2, g3 = st.columns(3)
     with g1:
-        st.markdown("**📁 기출문제 파일별 풀이**\n\n'251020 의학생화학', '인체해부학', '22중간' 등 족보 PDF 파일 단위로 선택하여 풀 수 있습니다.")
+        st.markdown("**📁 기출문제 파일별 & 상세 필터**\n\n족보 PDF 파일별 혹은 과목/년도/교수님 조건별로 맞춤형 문항 세트를 구성하여 풀 수 있습니다.")
     with g2:
-        st.markdown("**🎯 듀오링고식 1문항 루프**\n\n한 문제씩 답안을 제출하고 피드백을 확인한 후 다음 문제로 넘어가는 몰입형 학습 환경을 제공합니다.")
+        st.markdown("**🎯 듀오링고식 풀이 & 스킵**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 모르는 문제는 스킵하거나 그냥 다음으로 넘길 수 있습니다.")
     with g3:
-        st.markdown("**🤖 AI 핵심 기전 & 구제 버튼**\n\n풀이 후 즉시 1-2줄 핵심 기전을 확인하고, 표기 차이로 인한 억울한 오답은 '맞았다' 버튼으로 즉시 인정할 수 있습니다.")
+        st.markdown("**🤖 AI 핵심 기전 해설 & 구제**\n\n풀이 직후 핵심 의학적 기전을 확인하고, 표기 차이로 인한 억울한 오답은 '맞았다' 버튼으로 즉시 구제할 수 있습니다.")
 
 # -------------------------------------------------------------
 # 6. 화면 2: 기출문제 선택 창 (SELECTOR)
@@ -444,39 +436,41 @@ elif st.session_state.current_page == "selector":
     st.markdown("## 📂 기출문제 선택 & 필터")
     st.caption("풀고 싶은 기출문제 파일 또는 과목/년도/교수님 조건을 선택하세요.")
     
-    # 탭 구성: [기출문제 파일별로 선택] vs [조건별 상세 필터]
     tab_files, tab_custom = st.tabs(["📁 기출문제 파일별 선택", "🔍 과목/년도/교수님 상세 필터"])
-    
-    selected_subset = []
     
     with tab_files:
         st.write("")
         all_files = sorted(list(set(q.get("source_file", "기타 기출.pdf") for q in questions_pool)))
         
-        f_cols = st.columns([4, 8])
-        with f_cols[0]:
-            st.markdown("<p style='font-size: 16px; font-weight: 800; color: #1E293B; margin-bottom: 8px;'>📁 기출 파일 목록</p>", unsafe_allow_html=True)
-            picked_file = st.radio("기출 파일 목록", all_files, label_visibility="collapsed")
-        with f_cols[1]:
-            file_qs = [q for q in questions_pool if q.get("source_file") == picked_file]
-            st.markdown(f"#### 📄 {picked_file}")
-            st.markdown(f"- **문항 수:** {len(file_qs)}문항")
-            st.markdown(f"- **포함 교수님:** {', '.join(sorted(list(set(q['professor'] for q in file_qs))))}")
-            st.markdown(f"- **과목/년도:** {file_qs[0]['subject']} ({file_qs[0]['year']}년)")
-            
-            st.write("")
-            btn_col1, btn_col2 = st.columns([5, 5])
-            with btn_col1:
-                if st.button("🚀 이 파일 처음부터 풀기 (Q1)", type="primary", use_container_width=True):
-                    st.session_state.filter_source_file = picked_file
-                    st.session_state.study_mode = "파일별 풀기"
-                    start_quiz(0)
-                    st.rerun()
-            with btn_col2:
-                if st.button("📋 이 파일 문제 목록 펼치기", use_container_width=True):
-                    st.session_state.filter_source_file = picked_file
-                    st.session_state.study_mode = "파일별 풀기"
-                    st.rerun()
+        if not all_files:
+            st.info("등록된 기출 데이터가 없습니다. questions_db.json 파일을 확인해주세요.")
+        else:
+            f_cols = st.columns([4, 8])
+            with f_cols[0]:
+                st.markdown("<p style='font-size: 16px; font-weight: 800; color: #1E293B; margin-bottom: 8px;'>📁 기출 파일 목록</p>", unsafe_allow_html=True)
+                picked_file = st.radio("기출 파일 목록", all_files, label_visibility="collapsed")
+            with f_cols[1]:
+                file_qs = [q for q in questions_pool if q.get("source_file") == picked_file]
+                st.markdown(f"#### 📄 {picked_file}")
+                st.markdown(f"- **문항 수:** {len(file_qs)}문항")
+                st.markdown(f"- **포함 교수님:** {', '.join(sorted(list(set(q['professor'] for q in file_qs))))}")
+                if file_qs:
+                    st.markdown(f"- **과목/년도:** {file_qs[0]['subject']} ({file_qs[0]['year']}년)")
+                
+                st.write("")
+                btn_col1, btn_col2 = st.columns([5, 5])
+                with btn_col1:
+                    if st.button("🚀 이 파일 처음부터 풀기 (Q1)", type="primary", use_container_width=True):
+                        st.session_state.filter_source_file = picked_file
+                        st.session_state.study_mode = "파일별 풀기"
+                        start_quiz(0, custom_pool=file_qs)
+                        st.rerun()
+                with btn_col2:
+                    if st.button("📋 이 파일 문제 목록 펼치기", use_container_width=True):
+                        st.session_state.filter_source_file = picked_file
+                        st.session_state.study_mode = "파일별 풀기"
+                        st.session_state.active_custom_pool = file_qs
+                        st.rerun()
 
     with tab_custom:
         c1, c2, c3, c4 = st.columns(4)
@@ -509,20 +503,20 @@ elif st.session_state.current_page == "selector":
         if st.button(f"🎯 조건 만족 문제 풀기 ({len(custom_matched)}문항)", type="primary"):
             st.session_state.filter_source_file = "커스텀 필터"
             st.session_state.study_mode = s_mode
-            st.session_state.custom_list = [q["id"] for q in custom_matched]
-            start_quiz(0)
+            start_quiz(0, custom_pool=custom_matched)
             st.rerun()
 
     # ---------------------------------------------------------
-    # 문제 리스트 뷰어 (문항 번호 직접 클릭하여 바로 진입)
+    # 문제 리스트 뷰어 (문항 번호 직접 클릭하여 해당 문제만 바로 진입)
     # ---------------------------------------------------------
     st.write("")
     st.markdown("---")
     st.markdown("### 📑 문항 직접 선택 창")
-    st.caption("원하는 문항 번호를 클릭하면 해당 문제로 즉시 이동합니다.")
+    st.caption("원하는 문항 번호를 클릭하면 **해당 문제만 단독으로** 바로 풀 수 있습니다.")
     
-    # 현재 선택된 소스에 따른 문항 목록
-    if st.session_state.filter_source_file != "커스텀 필터" and st.session_state.filter_source_file != "전체 파일 보기":
+    if st.session_state.active_custom_pool is not None:
+        display_qs = st.session_state.active_custom_pool
+    elif st.session_state.filter_source_file != "커스텀 필터" and st.session_state.filter_source_file != "전체 파일 보기":
         display_qs = [q for q in questions_pool if q.get("source_file") == st.session_state.filter_source_file]
     else:
         display_qs = questions_pool
@@ -530,13 +524,11 @@ elif st.session_state.current_page == "selector":
     if not display_qs:
         st.info("선택된 파일이나 조건에 해당하는 문제가 없습니다.")
     else:
-        # 그리드 형태로 문항 버튼 배치 (한 줄에 5개씩)
         grid_cols = st.columns(5)
         for i, q in enumerate(display_qs):
             col_target = grid_cols[i % 5]
             q_id = q["id"]
             
-            # 문항 상태 태그
             status_emoji = "⚪"
             if q_id in st.session_state.correct_ids:
                 status_emoji = "🟢"
@@ -546,22 +538,19 @@ elif st.session_state.current_page == "selector":
                 status_emoji += "⭐"
                 
             btn_title = f"{status_emoji} Q{i+1}. {q['subject'][:4]} ({q['professor']})"
-            if col_target.button(btn_title, key=f"jump_btn_{q_id}", use_container_width=True):
-                st.session_state.target_pool_file = q.get("source_file")
-                start_quiz(i)
+            if col_target.button(btn_title, key=f"jump_btn_{q_id}_{i}", use_container_width=True):
+                # 문항 직접 선택 시, 해당 문제 단 1개만 풀 수 있도록 단일 아이템 리스트로 풀 세팅
+                start_quiz(0, custom_pool=[q])
                 st.rerun()
 
 # -------------------------------------------------------------
 # 7. 화면 3: 문제 풀이 화면 (QUIZ)
 # -------------------------------------------------------------
 elif st.session_state.current_page == "quiz":
-    # 풀이 대상 문제군 확정
-    if st.session_state.filter_source_file not in ["전체 파일 보기", "커스텀 필터"]:
+    if st.session_state.active_custom_pool is not None and len(st.session_state.active_custom_pool) > 0:
+        current_active_pool = st.session_state.active_custom_pool
+    elif st.session_state.filter_source_file not in ["전체 파일 보기", "커스텀 필터"]:
         current_active_pool = [q for q in questions_pool if q.get("source_file") == st.session_state.filter_source_file]
-    elif st.session_state.study_mode == "⭐ 별표 문제만":
-        current_active_pool = [q for q in questions_pool if q["id"] in st.session_state.starred_ids]
-    elif st.session_state.study_mode == "❌ 오답 문제만":
-        current_active_pool = [q for q in questions_pool if q["id"] in st.session_state.wrong_ids]
     else:
         current_active_pool = questions_pool
 
@@ -579,7 +568,6 @@ elif st.session_state.current_page == "quiz":
     q_id = current_q["id"]
     is_starred = q_id in st.session_state.starred_ids
 
-    # 진행률 및 네비게이션 서브 헤더
     p_val = (st.session_state.current_idx + 1) / len(current_active_pool)
     st.progress(p_val)
 
@@ -599,7 +587,6 @@ elif st.session_state.current_page == "quiz":
                 st.session_state.starred_ids.add(q_id)
             st.rerun()
 
-    # 문제 본문 카드
     st.markdown(f"""
     <div class="question-card">
         <span class="question-badge">{current_q['year']}년도 | {current_q['professor']} 교수님 | {current_q['subject']}</span>
@@ -607,7 +594,7 @@ elif st.session_state.current_page == "quiz":
     </div>
     """, unsafe_allow_html=True)
 
-    # 문항 이미지 렌더링 지원 (로컬 경로 / Base64 / 웹 URL 모두 자동 감지)
+    # 문항 이미지 렌더링
     img_data = current_q.get("image")
     if img_data:
         if isinstance(img_data, str) and (img_data.startswith("data:image") or img_data.startswith("http")):
@@ -619,7 +606,6 @@ elif st.session_state.current_page == "quiz":
     user_answer_raw = ""
     if current_q["type"] == "single_choice":
         if not st.session_state.answered_state:
-            # 풀기 전: 네모 박스 형태의 선택지 (클릭 시 초록색 하이라이트)
             user_choice = st.radio(
                 "정답을 선택하세요:",
                 current_q["choices"],
@@ -630,7 +616,6 @@ elif st.session_state.current_page == "quiz":
             if user_choice:
                 user_answer_raw = user_choice.strip()[0]
         else:
-            # 정답 확인 후: 전체 선지를 네모 박스로 유지하고 정답(파란색) / 오답(빨간색) 시각화
             st.markdown("<p style='font-weight:700; color:#334155; margin-bottom:12px; font-size:15px;'>📋 전체 선지 및 정답 결과:</p>", unsafe_allow_html=True)
             target_ans = str(current_q["answer"]).strip()
             user_ans = str(st.session_state.user_selected_ans).strip()
@@ -641,7 +626,6 @@ elif st.session_state.current_page == "quiz":
                 is_user_choice = (c_num == user_ans or choice_text.strip().startswith(user_ans))
 
                 if is_correct_choice:
-                    # 정답 선지: 파란색 테두리/배경 + 파란색 정답 뱃지
                     st.markdown(f"""
                     <div class="choice-card-correct">
                         <div>{choice_text}</div>
@@ -649,7 +633,6 @@ elif st.session_state.current_page == "quiz":
                     </div>
                     """, unsafe_allow_html=True)
                 elif is_user_choice and not is_correct_choice:
-                    # 내가 고른 오답 선지: 빨간색 테두리/배경 + 빨간색 오답 뱃지
                     st.markdown(f"""
                     <div class="choice-card-wrong">
                         <div>{choice_text}</div>
@@ -657,7 +640,6 @@ elif st.session_state.current_page == "quiz":
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # 나머지 일반 선지
                     st.markdown(f"""
                     <div class="choice-card-dimmed">
                         <div>{choice_text}</div>
@@ -678,35 +660,43 @@ elif st.session_state.current_page == "quiz":
     # 액션 버튼 영역
     st.write("")
     if not st.session_state.answered_state:
-        # 풀기 전: 이전 문제 / 스킵(모르겠어요) / 정답 확인하기
-        nav_col1, nav_col2, nav_col3 = st.columns([3, 3.5, 3.5])
-        with nav_col1:
-            if st.button("⬅️ 이전 문제", disabled=(st.session_state.current_idx == 0), use_container_width=True):
+        # 풀기 전: [이전 문제] / [그냥 다음 문제 (노스포 스킵)] / [스킵 후 해설 보기] / [정답 확인하기]
+        nav_c1, nav_c2, nav_c3, nav_c4 = st.columns([2.5, 3.2, 3.2, 3.2])
+        with nav_c1:
+            if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0), use_container_width=True):
                 st.session_state.current_idx -= 1
                 st.session_state.answered_state = False
                 st.session_state.is_skipped = False
                 st.session_state.show_ai = False
-                st.session_state.is_skipped = False
                 st.session_state.user_selected_ans = ""
                 st.rerun()
                 
-        with nav_col2:
-            if st.button("⏭️ 잘 모르겠어요 (스킵)", use_container_width=True):
+        with nav_c2:
+            if st.button("➡️ 그냥 다음", use_container_width=True):
+                st.session_state.current_idx += 1
+                st.session_state.answered_state = False
+                st.session_state.is_skipped = False
+                st.session_state.show_ai = False
+                st.session_state.user_selected_ans = ""
+                st.rerun()
+                
+        with nav_c3:
+            if st.button("⏭️ 모름(해설O)", use_container_width=True):
                 st.session_state.answered_state = True
                 st.session_state.is_skipped = True
                 st.session_state.is_correct = False
                 st.session_state.user_selected_ans = "건너뜀 (모름)"
                 st.session_state.streak = 0
                 st.session_state.wrong_ids.add(q_id)
-                st.session_state.show_ai = True  # 스킵 시 바로 기전 해설 자동 개방
+                st.session_state.show_ai = True
                 st.rerun()
                 
-        with nav_col3:
-            check_btn = st.button("정답 확인하기 ✔️", use_container_width=True, type="primary")
+        with nav_c4:
+            check_btn = st.button("정답 확인 ✔️", use_container_width=True, type="primary")
 
         if check_btn:
             if not user_answer_raw:
-                st.warning("답안을 먼저 선택하거나 입력해 주세요! (모를 때는 스킵 버튼을 누르세요)")
+                st.warning("답안을 먼저 선택하거나 입력해 주세요!")
             else:
                 st.session_state.user_selected_ans = user_answer_raw
                 st.session_state.is_skipped = False
@@ -731,7 +721,6 @@ elif st.session_state.current_page == "quiz":
                 st.rerun()
 
     else:
-        # 푼 후: 피드백, 정답 인정, AI 해설, 다음 문제
         is_skipped_mode = getattr(st.session_state, "is_skipped", False)
         
         if is_skipped_mode:
