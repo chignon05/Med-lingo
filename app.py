@@ -127,34 +127,8 @@ st.markdown("""
         margin-top: 16px;
         color: #991B1B;
     }
-    .ai-box {
-        background-color: #EFF6FF;
-        border-left: 4px solid #3B82F6;
-        padding: 16px 20px;
-        border-radius: 0 14px 14px 0;
-        margin-top: 14px;
-        font-size: 14px;
-        color: #1E3A8A;
-        line-height: 1.6;
-    }
-    
-    /* Exam Source File Card */
-    .exam-file-card {
-        background: white;
-        border: 2px solid #E2E8F0;
-        border-radius: 16px;
-        padding: 18px 22px;
-        margin-bottom: 14px;
-        transition: all 0.2s ease;
-    }
-    .exam-file-card:hover {
-        border-color: #6366F1;
-        box-shadow: 0 6px 16px -2px rgba(99, 102, 241, 0.15);
-    }
 
-    /* -------------------------------------------------------------
-       선지 네모 박스 스타일링
-       ------------------------------------------------------------- */
+    /* 선지 네모 박스 스타일링 */
     div[data-testid="stRadio"] > label,
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] {
         background: transparent !important;
@@ -215,7 +189,6 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.12);
-        animation: fadeIn 0.3s ease;
     }
 
     .choice-card-wrong {
@@ -230,7 +203,6 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         box-shadow: 0 4px 10px rgba(239, 68, 68, 0.12);
-        animation: fadeIn 0.3s ease;
     }
 
     .choice-card-dimmed {
@@ -298,8 +270,6 @@ if "user_selected_ans" not in st.session_state:
     st.session_state.user_selected_ans = ""
 if "is_correct" not in st.session_state:
     st.session_state.is_correct = False
-if "is_skipped" not in st.session_state:
-    st.session_state.is_skipped = False
 if "starred_ids" not in st.session_state:
     st.session_state.starred_ids = set()
 if "wrong_ids" not in st.session_state:
@@ -308,8 +278,6 @@ if "correct_ids" not in st.session_state:
     st.session_state.correct_ids = set()
 if "streak" not in st.session_state:
     st.session_state.streak = 0
-if "show_ai" not in st.session_state:
-    st.session_state.show_ai = False
 
 # 필터 및 풀이 풀 상태 관리
 if "filter_source_file" not in st.session_state:
@@ -322,14 +290,12 @@ if "active_custom_pool" not in st.session_state:
 def go_home():
     st.session_state.current_page = "home"
     st.session_state.answered_state = False
-    st.session_state.is_skipped = False
-    st.session_state.show_ai = False
+    st.session_state.user_selected_ans = ""
 
 def go_selector():
     st.session_state.current_page = "selector"
     st.session_state.answered_state = False
-    st.session_state.is_skipped = False
-    st.session_state.show_ai = False
+    st.session_state.user_selected_ans = ""
 
 def start_quiz(idx=0, custom_pool=None):
     st.session_state.current_idx = idx
@@ -337,8 +303,6 @@ def start_quiz(idx=0, custom_pool=None):
         st.session_state.active_custom_pool = custom_pool
     st.session_state.current_page = "quiz"
     st.session_state.answered_state = False
-    st.session_state.is_skipped = False
-    st.session_state.show_ai = False
     st.session_state.user_selected_ans = ""
 
 # -------------------------------------------------------------
@@ -375,8 +339,8 @@ if st.session_state.current_page == "home":
         <div style="font-size: 48px; margin-bottom: 8px;">🩺</div>
         <div class="hero-title">Med-Lingo</div>
         <div class="hero-sub">
-            JBL: Jokbo-Based Learning<br>
-            의대 족보를 가볍고 확실하게 정복하세요.
+            Jokbo-Based Learning<br>
+            의대 족보와 기출문제를 듀오링고처럼 가볍고 확실하게 정복하세요.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -425,9 +389,9 @@ if st.session_state.current_page == "home":
     with g1:
         st.markdown("**📁 기출문제 파일별 & 상세 필터**\n\n족보 PDF 파일별 혹은 과목/년도/교수님 조건별로 맞춤형 문항 세트를 구성하여 풀 수 있습니다.")
     with g2:
-        st.markdown("**🎯 듀오링고식 풀이 & 스킵**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 모르는 문제는 스킵하거나 그냥 다음으로 넘길 수 있습니다.")
+        st.markdown("**🎯 듀오링고식 풀이 & 노스포 스킵**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 모르는 문제는 정답 노출 없이 바로 다음으로 넘길 수 있습니다.")
     with g3:
-        st.markdown("**🤖 AI 핵심 기전 해설 & 구제**\n\n풀이 직후 핵심 의학적 기전을 확인하고, 표기 차이로 인한 억울한 오답은 '맞았다' 버튼으로 즉시 구제할 수 있습니다.")
+        st.markdown("**🔄 즉각적인 오답 노트 반영**\n\n풀이 결과에 따라 정답 및 오답이 실시간 집계되며, 표기 차이로 인한 억울한 오답은 '정답 인정' 버튼으로 구제할 수 있습니다.")
 
 # -------------------------------------------------------------
 # 6. 화면 2: 기출문제 선택 창 (SELECTOR)
@@ -657,41 +621,25 @@ elif st.session_state.current_page == "quiz":
         else:
             st.markdown(f"**내가 제출한 답:** `{st.session_state.user_selected_ans}`")
 
-    # 액션 버튼 영역
+    # 액션 버튼 영역 (해설 기능 제거 버전)
     st.write("")
     if not st.session_state.answered_state:
-        # 풀기 전: [이전 문제] / [그냥 다음 문제 (노스포 스킵)] / [스킵 후 해설 보기] / [정답 확인하기]
-        nav_c1, nav_c2, nav_c3, nav_c4 = st.columns([2.5, 3.2, 3.2, 3.2])
+        nav_c1, nav_c2, nav_c3 = st.columns([3, 4, 4])
         with nav_c1:
             if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0), use_container_width=True):
                 st.session_state.current_idx -= 1
                 st.session_state.answered_state = False
-                st.session_state.is_skipped = False
-                st.session_state.show_ai = False
                 st.session_state.user_selected_ans = ""
                 st.rerun()
                 
         with nav_c2:
-            if st.button("➡️ 그냥 다음", use_container_width=True):
+            if st.button("➡️ 그냥 다음 (스킵)", use_container_width=True):
                 st.session_state.current_idx += 1
                 st.session_state.answered_state = False
-                st.session_state.is_skipped = False
-                st.session_state.show_ai = False
                 st.session_state.user_selected_ans = ""
                 st.rerun()
                 
         with nav_c3:
-            if st.button("⏭️ 모름(해설O)", use_container_width=True):
-                st.session_state.answered_state = True
-                st.session_state.is_skipped = True
-                st.session_state.is_correct = False
-                st.session_state.user_selected_ans = "건너뜀 (모름)"
-                st.session_state.streak = 0
-                st.session_state.wrong_ids.add(q_id)
-                st.session_state.show_ai = True
-                st.rerun()
-                
-        with nav_c4:
             check_btn = st.button("정답 확인 ✔️", use_container_width=True, type="primary")
 
         if check_btn:
@@ -699,7 +647,6 @@ elif st.session_state.current_page == "quiz":
                 st.warning("답안을 먼저 선택하거나 입력해 주세요!")
             else:
                 st.session_state.user_selected_ans = user_answer_raw
-                st.session_state.is_skipped = False
                 correct_ans = str(current_q["answer"]).strip()
                 
                 if current_q["type"] == "single_choice":
@@ -721,16 +668,7 @@ elif st.session_state.current_page == "quiz":
                 st.rerun()
 
     else:
-        is_skipped_mode = getattr(st.session_state, "is_skipped", False)
-        
-        if is_skipped_mode:
-            st.markdown(f"""
-            <div style="background-color: #FEF3C7; border: 2px solid #F59E0B; border-radius: 16px; padding: 18px 22px; margin-top: 16px; color: #92400E;">
-                <h4 style="margin:0; font-size: 18px;">⏭️ 건너뛴 문제입니다.</h4>
-                <p style="margin: 4px 0 0 0; font-size: 14px;">정답: <b>{current_q['answer']}</b> (복습을 위해 오답노트에 자동 저장되었습니다)</p>
-            </div>
-            """, unsafe_allow_html=True)
-        elif st.session_state.is_correct:
+        if st.session_state.is_correct:
             st.markdown(f"""
             <div class="feedback-correct">
                 <h4 style="margin:0; font-size: 18px;">🎉 정답입니다! 계속 집중해 볼까요?</h4>
@@ -755,31 +693,16 @@ elif st.session_state.current_page == "quiz":
                 st.rerun()
 
         st.write("")
-        b_c1, b_c2, b_c3 = st.columns([3, 4, 3])
+        b_c1, b_c2 = st.columns([5, 5])
         with b_c1:
             if st.button("⬅️ 이전 문제", disabled=(st.session_state.current_idx == 0), use_container_width=True):
                 st.session_state.current_idx -= 1
                 st.session_state.answered_state = False
-                st.session_state.show_ai = False
-                st.session_state.is_skipped = False
                 st.session_state.user_selected_ans = ""
                 st.rerun()
         with b_c2:
-            if st.button("🤖 AI 핵심 기전 해설", key="quiz_ai_btn", use_container_width=True):
-                st.session_state.show_ai = not st.session_state.show_ai
-        with b_c3:
             if st.button("다음 문제 ➡️", type="primary", use_container_width=True):
                 st.session_state.current_idx += 1
                 st.session_state.answered_state = False
-                st.session_state.show_ai = False
-                st.session_state.is_skipped = False
                 st.session_state.user_selected_ans = ""
                 st.rerun()
-
-        if st.session_state.show_ai:
-            st.markdown(f"""
-            <div class="ai-box">
-                <b>🩺 AI Medical Assistant 기전 요약:</b><br>
-                {current_q['ai_explanation']}
-            </div>
-            """, unsafe_allow_html=True)
