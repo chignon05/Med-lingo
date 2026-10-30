@@ -375,8 +375,8 @@ if st.session_state.current_page == "home":
         <div style="font-size: 48px; margin-bottom: 8px;">🩺</div>
         <div class="hero-title">Med-Lingo</div>
         <div class="hero-sub">
-            Jokbo-Based Learning<br>
-            의대 족보와 기출문제를 듀오링고처럼 가볍고 확실하게 정복하세요.
+            JBL: Jokbo-Based Learning<br>
+            의대 족보를 가볍고 확실하게 정복하세요.
         </div>
     </div>
     """, unsafe_allow_html=True)
