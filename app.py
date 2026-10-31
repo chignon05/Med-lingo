@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for polished Duolingo / Modern Web App Look
+# Custom CSS for polished Duolingo / Modern Web App Look & Bottom Floating Bar
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
@@ -23,44 +23,73 @@ st.markdown("""
     .stApp {
         background-color: #F8FAFC;
     }
-    
-    /* Top Navigation bar */
-    .top-nav {
-        background: white;
-        padding: 12px 24px;
-        border-radius: 16px;
-        border: 2px solid #E2E8F0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+
+    /* -------------------------------------------------------------
+       1. 상단 네비게이션 헤더 버튼 스타일 (우측 뱃지와 크기/높이 통일)
+       ------------------------------------------------------------- */
+    div[data-testid="stButton"] > button[key="global_home_btn"],
+    div[data-testid="stButton"] > button[key="global_selector_btn"] {
+        min-height: 44px !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        border-radius: 12px !important;
+        padding: 6px 16px !important;
+        border: 1.5px solid #CBD5E1 !important;
+        background-color: white !important;
+        color: #1E293B !important;
+        transition: all 0.2s ease !important;
     }
-    
-    /* Home Hero Card */
+    div[data-testid="stButton"] > button[key="global_home_btn"]:hover,
+    div[data-testid="stButton"] > button[key="global_selector_btn"]:hover {
+        border-color: #6366F1 !important;
+        color: #4F46E5 !important;
+        background-color: #EEF2FF !important;
+    }
+
+    /* -------------------------------------------------------------
+       2. 홈 화면 히어로 카드 & 풀러가기 대형 버튼
+       ------------------------------------------------------------- */
     .hero-card {
         background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%);
         border-radius: 24px;
         padding: 40px 32px;
         color: white;
         text-align: center;
-        margin-bottom: 28px;
+        margin-bottom: 20px;
         box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
     }
     
     .hero-title {
-        font-size: 36px;
+        font-size: 38px;
         font-weight: 800;
         margin-bottom: 12px;
         letter-spacing: -0.5px;
     }
     
     .hero-sub {
-        font-size: 17px;
+        font-size: 18px;
         opacity: 0.95;
         max-width: 620px;
-        margin: 0 auto 24px auto;
+        margin: 0 auto;
         line-height: 1.6;
+    }
+
+    /* 히어로 카드 너비와 동일한 대형 풀러가기 버튼 */
+    div[data-testid="stButton"] > button[key="home_start_hero_btn"] {
+        min-height: 72px !important;
+        font-size: 22px !important;
+        font-weight: 800 !important;
+        border-radius: 18px !important;
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 8px 20px -3px rgba(16, 185, 129, 0.4) !important;
+        transition: all 0.2s ease !important;
+        margin-bottom: 24px !important;
+    }
+    div[data-testid="stButton"] > button[key="home_start_hero_btn"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 24px -2px rgba(16, 185, 129, 0.5) !important;
     }
     
     /* Stats & Feature Cards */
@@ -84,12 +113,32 @@ st.markdown("""
         color: #64748B;
     }
 
+    /* -------------------------------------------------------------
+       3. 문제 풀이 화면 상단 바 (목록으로 / 별표하기 버튼 확대)
+       ------------------------------------------------------------- */
+    div[data-testid="stButton"] > button[key="quiz_back_to_list"],
+    div[data-testid="stButton"] > button[key^="quiz_star_"] {
+        min-height: 48px !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        border-radius: 14px !important;
+        padding: 8px 18px !important;
+        border: 2px solid #CBD5E1 !important;
+        background: white !important;
+        color: #1E293B !important;
+    }
+    div[data-testid="stButton"] > button[key="quiz_back_to_list"]:hover {
+        border-color: #6366F1 !important;
+        color: #4F46E5 !important;
+        background: #EEF2FF !important;
+    }
+
     /* Question Card */
     .question-card {
         background: white;
         border: 2px solid #E2E8F0;
         border-radius: 20px;
-        padding: 28px 24px 20px 24px;
+        padding: 28px 24px 24px 24px;
         box-shadow: 0 6px 12px -2px rgba(0,0,0,0.05);
         margin-bottom: 20px;
     }
@@ -97,14 +146,14 @@ st.markdown("""
         display: inline-block;
         background-color: #EEF2FF;
         color: #4338CA;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
-        padding: 5px 12px;
+        padding: 6px 14px;
         border-radius: 10px;
         margin-bottom: 14px;
     }
     .question-text {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 700;
         color: #1E293B;
         line-height: 1.65;
@@ -116,7 +165,8 @@ st.markdown("""
         border: 2px solid #10B981;
         border-radius: 16px;
         padding: 18px 22px;
-        margin-top: 16px;
+        margin-top: 14px;
+        margin-bottom: 20px;
         color: #065F46;
     }
     .feedback-wrong {
@@ -124,7 +174,8 @@ st.markdown("""
         border: 2px solid #EF4444;
         border-radius: 16px;
         padding: 18px 22px;
-        margin-top: 16px;
+        margin-top: 14px;
+        margin-bottom: 20px;
         color: #991B1B;
     }
 
@@ -136,7 +187,7 @@ st.markdown("""
         box-shadow: none !important;
         padding: 0 0 10px 0 !important;
         cursor: default !important;
-        font-size: 16px !important;
+        font-size: 17px !important;
         font-weight: 800 !important;
         color: #1E293B !important;
     }
@@ -150,6 +201,7 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         gap: 12px;
+        margin-bottom: 30px;
     }
     
     div[data-testid="stRadio"] div[role="radiogroup"] label {
@@ -213,6 +265,36 @@ st.markdown("""
         margin-bottom: 12px;
         color: #64748B;
         opacity: 0.85;
+    }
+
+    /* -------------------------------------------------------------
+       4. 화면 하단 고정 플로팅 액션 바 (Sticky / Fixed Action Bar)
+       ------------------------------------------------------------- */
+    .bottom-bar-spacer {
+        height: 120px; /* 고정 바가 화면 내용을 가리지 않도록 바닥 여백 추가 */
+    }
+
+    div[data-testid="stVerticalBlock"]:has(> div.bottom-floating-anchor) {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: rgba(255, 255, 255, 0.94) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border-top: 2px solid #CBD5E1 !important;
+        padding: 14px 28px !important;
+        z-index: 99999 !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* 하단 고정 바 내부 버튼들의 크기 및 높이 대폭 확대 */
+    div[data-testid="stVerticalBlock"]:has(> div.bottom-floating-anchor) button {
+        min-height: 56px !important;
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        border-radius: 14px !important;
+        transition: all 0.15s ease !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -306,17 +388,17 @@ def start_quiz(idx=0, custom_pool=None):
     st.session_state.user_selected_ans = ""
 
 # -------------------------------------------------------------
-# 4. 상단 네비게이션 헤더 (우측 상단 뱃지 크기 확대)
+# 4. 상단 네비게이션 헤더 (모든 버튼 및 뱃지 크기 균형 맞춤)
 # -------------------------------------------------------------
-col_h1, col_h2, col_h3 = st.columns([3, 3.5, 5.5])
+col_h1, col_h2, col_h3 = st.columns([3, 4, 5])
 with col_h1:
-    if st.button("⚡ Med-Lingo", key="global_home_btn", use_container_width=False):
+    if st.button("⚡ Med-Lingo", key="global_home_btn", use_container_width=True):
         go_home()
         st.rerun()
 
 with col_h2:
     if st.session_state.current_page != "home":
-        if st.button("📂 기출/문제 선택창 이동", key="global_selector_btn"):
+        if st.button("📂 기출/문제 선택창 이동", key="global_selector_btn", use_container_width=True):
             go_selector()
             st.rerun()
 
@@ -324,15 +406,15 @@ with col_h3:
     st.markdown(
         f"""
         <div style='text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 8px;'>
-            <span style='background: #EEF2FF; color: #4338CA; padding: 6px 14px; border-radius: 12px; font-size: 17px; font-weight: 800; border: 1.5px solid #C7D2FE;'>🔥 {st.session_state.streak}연승</span>
-            <span style='background: #FEF3C7; color: #B45309; padding: 6px 14px; border-radius: 12px; font-size: 17px; font-weight: 800; border: 1.5px solid #FDE68A;'>⭐ {len(st.session_state.starred_ids)}</span>
-            <span style='background: #FEE2E2; color: #B91C1C; padding: 6px 14px; border-radius: 12px; font-size: 17px; font-weight: 800; border: 1.5px solid #FECACA;'>❌ {len(st.session_state.wrong_ids)}</span>
+            <span style='background: #EEF2FF; color: #4338CA; padding: 7px 14px; border-radius: 12px; font-size: 16px; font-weight: 800; border: 1.5px solid #C7D2FE;'>🔥 {st.session_state.streak}연승</span>
+            <span style='background: #FEF3C7; color: #B45309; padding: 7px 14px; border-radius: 12px; font-size: 16px; font-weight: 800; border: 1.5px solid #FDE68A;'>⭐ {len(st.session_state.starred_ids)}</span>
+            <span style='background: #FEE2E2; color: #B91C1C; padding: 7px 14px; border-radius: 12px; font-size: 16px; font-weight: 800; border: 1.5px solid #FECACA;'>❌ {len(st.session_state.wrong_ids)}</span>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-st.markdown("<hr style='margin-top: 8px; margin-bottom: 20px; border-color: #E2E8F0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top: 10px; margin-bottom: 22px; border-color: #E2E8F0;'>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # 5. 화면 1: 홈 화면 (HOME)
@@ -340,7 +422,7 @@ st.markdown("<hr style='margin-top: 8px; margin-bottom: 20px; border-color: #E2E
 if st.session_state.current_page == "home":
     st.markdown("""
     <div class="hero-card">
-        <div style="font-size: 48px; margin-bottom: 8px;">🩺</div>
+        <div style="font-size: 52px; margin-bottom: 10px;">🩺</div>
         <div class="hero-title">Med-Lingo</div>
         <div class="hero-sub">
             Jokbo-Based Learning<br>
@@ -349,11 +431,10 @@ if st.session_state.current_page == "home":
     </div>
     """, unsafe_allow_html=True)
     
-    c_btn1, c_btn2, c_btn3 = st.columns([3, 4, 3])
-    with c_btn2:
-        if st.button("🚀 Med-Lingo 기출 풀러가기", type="primary", use_container_width=True):
-            go_selector()
-            st.rerun()
+    # 상단 히어로 카드와 동일한 전체 너비 및 큼직한 높이의 CTA 버튼
+    if st.button("🚀 Med-Lingo 기출 풀러가기", key="home_start_hero_btn", use_container_width=True):
+        go_selector()
+        st.rerun()
             
     st.write("")
     st.markdown("### 📊 나의 학습 진행 현황")
@@ -393,7 +474,7 @@ if st.session_state.current_page == "home":
     with g1:
         st.markdown("**📁 기출문제 파일별 & 상세 필터**\n\n족보 PDF 파일별 혹은 과목/년도/교수님 조건별로 맞춤형 문항 세트를 구성하여 풀 수 있습니다.")
     with g2:
-        st.markdown("**🎯 듀오링고식 풀이 & 노스포 스킵**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 모르는 문제는 정답 노출 없이 바로 다음으로 넘길 수 있습니다.")
+        st.markdown("**🎯 듀오링고식 풀이 & 하단 고정 버튼**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 이전/다음 버튼이 화면 하단에 고정되어 편안하게 풀 수 있습니다.")
     with g3:
         st.markdown("**🔄 즉각적인 오답 노트 반영**\n\n풀이 결과에 따라 정답 및 오답이 실시간 집계되며, 표기 차이로 인한 억울한 오답은 '정답 인정' 버튼으로 구제할 수 있습니다.")
 
@@ -483,7 +564,7 @@ elif st.session_state.current_page == "selector":
                 st.rerun()
 
     # ---------------------------------------------------------
-    # 문제 리스트 뷰어 (해당 세트 전체를 유지하며 클릭한 문항부터 앞뒤로 풀기 가능)
+    # 문제 리스트 뷰어 (클릭한 문제부터 앞뒤로 연속 풀이 가능)
     # ---------------------------------------------------------
     st.write("")
     st.markdown("---")
@@ -515,12 +596,11 @@ elif st.session_state.current_page == "selector":
                 
             btn_title = f"{status_emoji} Q{i+1}. {q['subject'][:4]} ({q['professor']})"
             if col_target.button(btn_title, key=f"jump_btn_{q_id}_{i}", use_container_width=True):
-                # 선택한 문제의 인덱스로 시작하되, 펼쳐진 목록 전체(display_qs)를 풀이 풀로 전달하여 앞뒤 이동 가능
                 start_quiz(i, custom_pool=display_qs)
                 st.rerun()
 
 # -------------------------------------------------------------
-# 7. 화면 3: 문제 풀이 화면 (QUIZ)
+# 7. 화면 3: 문제 풀이 화면 (QUIZ & 플로팅 하단 고정 바)
 # -------------------------------------------------------------
 elif st.session_state.current_page == "quiz":
     if st.session_state.active_custom_pool is not None and len(st.session_state.active_custom_pool) > 0:
@@ -544,14 +624,22 @@ elif st.session_state.current_page == "quiz":
     q_id = current_q["id"]
     is_starred = q_id in st.session_state.starred_ids
 
+    # 진행도 게이지
     p_val = (st.session_state.current_idx + 1) / len(current_active_pool)
     st.progress(p_val)
 
-    sub_c1, sub_c2, sub_c3 = st.columns([5, 3, 2])
+    # 상단 정보 및 대형 조작 버튼 (진행도 / 문제 목록 / 별표하기)
+    sub_c1, sub_c2, sub_c3 = st.columns([5, 3.2, 2.8])
     with sub_c1:
-        st.markdown(f"**진행도 {st.session_state.current_idx + 1} / {len(current_active_pool)}** | 출처: `{current_q.get('source_file', '기출문제')}`")
+        st.markdown(
+            f"<div style='font-size: 18px; font-weight: 800; color: #1E293B; margin-top: 8px;'>"
+            f"진행도 {st.session_state.current_idx + 1} / {len(current_active_pool)} "
+            f"<span style='font-size: 14px; font-weight: 600; color: #64748B;'>| `{current_q.get('source_file', '기출문제')}`</span>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
     with sub_c2:
-        if st.button("📋 문제 목록으로 돌아가기"):
+        if st.button("📋 문제 목록으로 돌아가기", key="quiz_back_to_list", use_container_width=True):
             go_selector()
             st.rerun()
     with sub_c3:
@@ -563,6 +651,7 @@ elif st.session_state.current_page == "quiz":
                 st.session_state.starred_ids.add(q_id)
             st.rerun()
 
+    # 문제 본문 카드
     st.markdown(f"""
     <div class="question-card">
         <span class="question-badge">{current_q['year']}년도 | {current_q['professor']} 교수님 | {current_q['subject']}</span>
@@ -592,7 +681,7 @@ elif st.session_state.current_page == "quiz":
             if user_choice:
                 user_answer_raw = user_choice.strip()[0]
         else:
-            st.markdown("<p style='font-weight:700; color:#334155; margin-bottom:12px; font-size:15px;'>📋 전체 선지 및 정답 결과:</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-weight:800; color:#1E293B; margin-bottom:12px; font-size:16px;'>📋 전체 선지 및 정답 결과:</p>", unsafe_allow_html=True)
             target_ans = str(current_q["answer"]).strip()
             user_ans = str(st.session_state.user_selected_ans).strip()
 
@@ -605,14 +694,14 @@ elif st.session_state.current_page == "quiz":
                     st.markdown(f"""
                     <div class="choice-card-correct">
                         <div>{choice_text}</div>
-                        <span style="background:#2563EB; color:white; font-size:12px; font-weight:700; padding:4px 10px; border-radius:8px; white-space:nowrap; margin-left:12px;">✅ 정답</span>
+                        <span style="background:#2563EB; color:white; font-size:13px; font-weight:700; padding:4px 12px; border-radius:8px; white-space:nowrap; margin-left:12px;">✅ 정답</span>
                     </div>
                     """, unsafe_allow_html=True)
                 elif is_user_choice and not is_correct_choice:
                     st.markdown(f"""
                     <div class="choice-card-wrong">
                         <div>{choice_text}</div>
-                        <span style="background:#EF4444; color:white; font-size:12px; font-weight:700; padding:4px 10px; border-radius:8px; white-space:nowrap; margin-left:12px;">❌ 내가 고른 오답</span>
+                        <span style="background:#EF4444; color:white; font-size:13px; font-weight:700; padding:4px 12px; border-radius:8px; white-space:nowrap; margin-left:12px;">❌ 내가 고른 오답</span>
                     </div>
                     """, unsafe_allow_html=True)
                 else:
@@ -633,71 +722,24 @@ elif st.session_state.current_page == "quiz":
         else:
             st.markdown(f"**내가 제출한 답:** `{st.session_state.user_selected_ans}`")
 
-    # 액션 버튼 영역
-    st.write("")
-    is_last_question = (st.session_state.current_idx >= len(current_active_pool) - 1)
-
-    if not st.session_state.answered_state:
-        nav_c1, nav_c2, nav_c3 = st.columns([3, 4, 4])
-        with nav_c1:
-            if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0), use_container_width=True):
-                st.session_state.current_idx -= 1
-                st.session_state.answered_state = False
-                st.session_state.user_selected_ans = ""
-                st.rerun()
-                
-        with nav_c2:
-            if st.button("➡️ 그냥 다음 (스킵)", disabled=is_last_question, use_container_width=True):
-                st.session_state.current_idx += 1
-                st.session_state.answered_state = False
-                st.session_state.user_selected_ans = ""
-                st.rerun()
-                
-        with nav_c3:
-            check_btn = st.button("정답 확인 ✔️", use_container_width=True, type="primary")
-
-        if check_btn:
-            if not user_answer_raw:
-                st.warning("답안을 먼저 선택하거나 입력해 주세요!")
-            else:
-                st.session_state.user_selected_ans = user_answer_raw
-                correct_ans = str(current_q["answer"]).strip()
-                
-                if current_q["type"] == "single_choice":
-                    matched = (user_answer_raw == correct_ans)
-                else:
-                    matched = check_short_answer(user_answer_raw, correct_ans)
-                    
-                st.session_state.is_correct = matched
-                st.session_state.answered_state = True
-                
-                if matched:
-                    st.session_state.streak += 1
-                    st.session_state.correct_ids.add(q_id)
-                    if q_id in st.session_state.wrong_ids:
-                        st.session_state.wrong_ids.remove(q_id)
-                else:
-                    st.session_state.streak = 0
-                    st.session_state.wrong_ids.add(q_id)
-                st.rerun()
-
-    else:
+    # 결과 피드백 바
+    if st.session_state.answered_state:
         if st.session_state.is_correct:
             st.markdown(f"""
             <div class="feedback-correct">
-                <h4 style="margin:0; font-size: 18px;">🎉 정답입니다! 계속 집중해 볼까요?</h4>
-                <p style="margin: 4px 0 0 0; font-size: 14px;">정답: <b>{current_q['answer']}</b></p>
+                <h4 style="margin:0; font-size: 19px;">🎉 정답입니다! 계속 집중해 볼까요?</h4>
+                <p style="margin: 6px 0 0 0; font-size: 15px;">정답: <b>{current_q['answer']}</b></p>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
             <div class="feedback-wrong">
-                <h4 style="margin:0; font-size: 18px;">❌ 오답 처리되었습니다.</h4>
-                <p style="margin: 4px 0 0 0; font-size: 14px;">기준 정답: <b>{current_q['answer']}</b></p>
+                <h4 style="margin:0; font-size: 19px;">❌ 오답 처리되었습니다.</h4>
+                <p style="margin: 6px 0 0 0; font-size: 15px;">기준 정답: <b>{current_q['answer']}</b></p>
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🙋 맞았는데 틀렸어요! (정답으로 인정)", key="override_btn"):
+            if st.button("🙋 맞았는데 틀렸어요! (정답으로 인정)", key="override_btn", use_container_width=True):
                 st.session_state.is_correct = True
                 st.session_state.streak += 1
                 st.session_state.correct_ids.add(q_id)
@@ -706,21 +748,78 @@ elif st.session_state.current_page == "quiz":
                 st.toast("정답으로 인정되어 오답노트에서 제외되었습니다!")
                 st.rerun()
 
-        st.write("")
-        b_c1, b_c2 = st.columns([5, 5])
-        with b_c1:
-            if st.button("⬅️ 이전 문제", disabled=(st.session_state.current_idx == 0), use_container_width=True):
-                st.session_state.current_idx -= 1
-                st.session_state.answered_state = False
-                st.session_state.user_selected_ans = ""
-                st.rerun()
-        with b_c2:
-            next_label = "풀이 완료 (선택창으로 이동)" if is_last_question else "다음 문제 ➡️"
-            if st.button(next_label, type="primary", use_container_width=True):
-                if is_last_question:
-                    go_selector()
-                else:
+    # 하단 고정 바 아래 콘텐츠 공간 확보용 스페이서
+    st.markdown('<div class="bottom-bar-spacer"></div>', unsafe_allow_html=True)
+
+    # -------------------------------------------------------------
+    # 8. [화면 하단 고정 플로팅 바] (문제 높이와 무관하게 항상 하단에 고정)
+    # -------------------------------------------------------------
+    is_last_question = (st.session_state.current_idx >= len(current_active_pool) - 1)
+
+    bottom_bar_container = st.container()
+    with bottom_bar_container:
+        # CSS Anchor Div (이 태그가 있는 컨테이너를 CSS로 하단 고정)
+        st.markdown('<div class="bottom-floating-anchor"></div>', unsafe_allow_html=True)
+
+        if not st.session_state.answered_state:
+            # 문제 풀기 전: [이전] / [그냥 다음(스킵)] / [정답 확인]
+            btn_col1, btn_col2, btn_col3 = st.columns([3, 4, 4])
+            with btn_col1:
+                if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0), use_container_width=True):
+                    st.session_state.current_idx -= 1
+                    st.session_state.answered_state = False
+                    st.session_state.user_selected_ans = ""
+                    st.rerun()
+            with btn_col2:
+                if st.button("➡️ 그냥 다음 (스킵)", disabled=is_last_question, use_container_width=True):
                     st.session_state.current_idx += 1
                     st.session_state.answered_state = False
                     st.session_state.user_selected_ans = ""
-                st.rerun()
+                    st.rerun()
+            with btn_col3:
+                check_btn = st.button("정답 확인 ✔️", type="primary", use_container_width=True)
+
+            if check_btn:
+                if not user_answer_raw:
+                    st.warning("답안을 먼저 선택하거나 입력해 주세요!")
+                else:
+                    st.session_state.user_selected_ans = user_answer_raw
+                    correct_ans = str(current_q["answer"]).strip()
+                    
+                    if current_q["type"] == "single_choice":
+                        matched = (user_answer_raw == correct_ans)
+                    else:
+                        matched = check_short_answer(user_answer_raw, correct_ans)
+                        
+                    st.session_state.is_correct = matched
+                    st.session_state.answered_state = True
+                    
+                    if matched:
+                        st.session_state.streak += 1
+                        st.session_state.correct_ids.add(q_id)
+                        if q_id in st.session_state.wrong_ids:
+                            st.session_state.wrong_ids.remove(q_id)
+                    else:
+                        st.session_state.streak = 0
+                        st.session_state.wrong_ids.add(q_id)
+                    st.rerun()
+
+        else:
+            # 정답 확인 후: [이전 문제] / [다음 문제 or 풀이 완료]
+            btn_col1, btn_col2 = st.columns([4, 6])
+            with btn_col1:
+                if st.button("⬅️ 이전 문제", disabled=(st.session_state.current_idx == 0), use_container_width=True):
+                    st.session_state.current_idx -= 1
+                    st.session_state.answered_state = False
+                    st.session_state.user_selected_ans = ""
+                    st.rerun()
+            with btn_col2:
+                next_label = "풀이 완료 (선택창으로 이동)" if is_last_question else "다음 문제 ➡️"
+                if st.button(next_label, type="primary", use_container_width=True):
+                    if is_last_question:
+                        go_selector()
+                    else:
+                        st.session_state.current_idx += 1
+                        st.session_state.answered_state = False
+                        st.session_state.user_selected_ans = ""
+                    st.rerun()
