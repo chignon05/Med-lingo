@@ -306,9 +306,9 @@ def start_quiz(idx=0, custom_pool=None):
     st.session_state.user_selected_ans = ""
 
 # -------------------------------------------------------------
-# 4. 상단 네비게이션 헤더
+# 4. 상단 네비게이션 헤더 (우측 상단 뱃지 크기 확대)
 # -------------------------------------------------------------
-col_h1, col_h2, col_h3 = st.columns([4, 4, 4])
+col_h1, col_h2, col_h3 = st.columns([3, 3.5, 5.5])
 with col_h1:
     if st.button("⚡ Med-Lingo", key="global_home_btn", use_container_width=False):
         go_home()
@@ -322,9 +322,13 @@ with col_h2:
 
 with col_h3:
     st.markdown(
-        f"<div style='text-align: right; padding-top: 6px; font-weight:700; color:#4F46E5;'>"
-        f"🔥 {st.session_state.streak}연승 | ⭐ {len(st.session_state.starred_ids)} | ❌ {len(st.session_state.wrong_ids)}"
-        f"</div>",
+        f"""
+        <div style='text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 8px;'>
+            <span style='background: #EEF2FF; color: #4338CA; padding: 6px 14px; border-radius: 12px; font-size: 17px; font-weight: 800; border: 1.5px solid #C7D2FE;'>🔥 {st.session_state.streak}연승</span>
+            <span style='background: #FEF3C7; color: #B45309; padding: 6px 14px; border-radius: 12px; font-size: 17px; font-weight: 800; border: 1.5px solid #FDE68A;'>⭐ {len(st.session_state.starred_ids)}</span>
+            <span style='background: #FEE2E2; color: #B91C1C; padding: 6px 14px; border-radius: 12px; font-size: 17px; font-weight: 800; border: 1.5px solid #FECACA;'>❌ {len(st.session_state.wrong_ids)}</span>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
@@ -464,19 +468,27 @@ elif st.session_state.current_page == "selector":
             custom_matched = [q for q in custom_matched if q["id"] in st.session_state.wrong_ids]
             
         st.write("")
-        if st.button(f"🎯 조건 만족 문제 풀기 ({len(custom_matched)}문항)", type="primary"):
-            st.session_state.filter_source_file = "커스텀 필터"
-            st.session_state.study_mode = s_mode
-            start_quiz(0, custom_pool=custom_matched)
-            st.rerun()
+        c_btn_c1, c_btn_c2 = st.columns([5, 5])
+        with c_btn_c1:
+            if st.button(f"🎯 조건 만족 문제 풀기 ({len(custom_matched)}문항)", type="primary", use_container_width=True):
+                st.session_state.filter_source_file = "커스텀 필터"
+                st.session_state.study_mode = s_mode
+                start_quiz(0, custom_pool=custom_matched)
+                st.rerun()
+        with c_btn_c2:
+            if st.button(f"📋 이 필터 문제 목록 펼치기 ({len(custom_matched)}문항)", use_container_width=True):
+                st.session_state.filter_source_file = "커스텀 필터"
+                st.session_state.study_mode = s_mode
+                st.session_state.active_custom_pool = custom_matched
+                st.rerun()
 
     # ---------------------------------------------------------
-    # 문제 리스트 뷰어 (문항 번호 직접 클릭하여 해당 문제만 바로 진입)
+    # 문제 리스트 뷰어 (해당 세트 전체를 유지하며 클릭한 문항부터 앞뒤로 풀기 가능)
     # ---------------------------------------------------------
     st.write("")
     st.markdown("---")
     st.markdown("### 📑 문항 직접 선택 창")
-    st.caption("원하는 문항 번호를 클릭하면 **해당 문제만 단독으로** 바로 풀 수 있습니다.")
+    st.caption("원하는 문항 번호를 클릭하면 **해당 문제부터 이전/다음으로 이동하며 연속해서** 풀 수 있습니다.")
     
     if st.session_state.active_custom_pool is not None:
         display_qs = st.session_state.active_custom_pool
@@ -503,8 +515,8 @@ elif st.session_state.current_page == "selector":
                 
             btn_title = f"{status_emoji} Q{i+1}. {q['subject'][:4]} ({q['professor']})"
             if col_target.button(btn_title, key=f"jump_btn_{q_id}_{i}", use_container_width=True):
-                # 문항 직접 선택 시, 해당 문제 단 1개만 풀 수 있도록 단일 아이템 리스트로 풀 세팅
-                start_quiz(0, custom_pool=[q])
+                # 선택한 문제의 인덱스로 시작하되, 펼쳐진 목록 전체(display_qs)를 풀이 풀로 전달하여 앞뒤 이동 가능
+                start_quiz(i, custom_pool=display_qs)
                 st.rerun()
 
 # -------------------------------------------------------------
@@ -621,8 +633,10 @@ elif st.session_state.current_page == "quiz":
         else:
             st.markdown(f"**내가 제출한 답:** `{st.session_state.user_selected_ans}`")
 
-    # 액션 버튼 영역 (해설 기능 제거 버전)
+    # 액션 버튼 영역
     st.write("")
+    is_last_question = (st.session_state.current_idx >= len(current_active_pool) - 1)
+
     if not st.session_state.answered_state:
         nav_c1, nav_c2, nav_c3 = st.columns([3, 4, 4])
         with nav_c1:
@@ -633,7 +647,7 @@ elif st.session_state.current_page == "quiz":
                 st.rerun()
                 
         with nav_c2:
-            if st.button("➡️ 그냥 다음 (스킵)", use_container_width=True):
+            if st.button("➡️ 그냥 다음 (스킵)", disabled=is_last_question, use_container_width=True):
                 st.session_state.current_idx += 1
                 st.session_state.answered_state = False
                 st.session_state.user_selected_ans = ""
@@ -701,8 +715,12 @@ elif st.session_state.current_page == "quiz":
                 st.session_state.user_selected_ans = ""
                 st.rerun()
         with b_c2:
-            if st.button("다음 문제 ➡️", type="primary", use_container_width=True):
-                st.session_state.current_idx += 1
-                st.session_state.answered_state = False
-                st.session_state.user_selected_ans = ""
+            next_label = "풀이 완료 (선택창으로 이동)" if is_last_question else "다음 문제 ➡️"
+            if st.button(next_label, type="primary", use_container_width=True):
+                if is_last_question:
+                    go_selector()
+                else:
+                    st.session_state.current_idx += 1
+                    st.session_state.answered_state = False
+                    st.session_state.user_selected_ans = ""
                 st.rerun()
