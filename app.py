@@ -39,27 +39,11 @@ st.markdown("""
         color: #1E293B !important;
         transition: all 0.2s ease !important;
     }
-    
-    /* 우상단 별표 / 오답 클릭 버튼 스타일 */
-    div[data-testid="stButton"] > button[key="top_nav_star_btn"] {
-        min-height: 44px !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        border-radius: 12px !important;
-        background-color: #FEF3C7 !important;
-        color: #B45309 !important;
-        border: 1.5px solid #FDE68A !important;
-        padding: 6px 14px !important;
-    }
-    div[data-testid="stButton"] > button[key="top_nav_wrong_btn"] {
-        min-height: 44px !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        border-radius: 12px !important;
-        background-color: #FEE2E2 !important;
-        color: #B91C1C !important;
-        border: 1.5px solid #FECACA !important;
-        padding: 6px 14px !important;
+    div[data-testid="stButton"] > button[key="global_home_btn"]:hover,
+    div[data-testid="stButton"] > button[key="global_selector_btn"]:hover {
+        border-color: #6366F1 !important;
+        color: #4F46E5 !important;
+        background-color: #EEF2FF !important;
     }
 
     /* -------------------------------------------------------------
@@ -251,7 +235,7 @@ st.markdown("""
         opacity: 0.85;
     }
 
-    /* 4. 문제 풀이 조작 버튼 (적절히 큼직한 높이 유지) */
+    /* 문제 풀이 조작 버튼 */
     .quiz-action-bar button {
         min-height: 52px !important;
         font-size: 17px !important;
@@ -320,8 +304,6 @@ if "wrong_ids" not in st.session_state:
     st.session_state.wrong_ids = set()
 if "correct_ids" not in st.session_state:
     st.session_state.correct_ids = set()
-if "streak" not in st.session_state:
-    st.session_state.streak = 0
 
 # 필터 및 풀이 풀 상태 관리
 if "filter_source_file" not in st.session_state:
@@ -330,21 +312,16 @@ if "study_mode" not in st.session_state:
     st.session_state.study_mode = "전체 기출"
 if "active_custom_pool" not in st.session_state:
     st.session_state.active_custom_pool = None
-if "selected_tab" not in st.session_state:
-    st.session_state.selected_tab = 0
 
 def go_home():
     st.session_state.current_page = "home"
     st.session_state.answered_state = False
     st.session_state.user_selected_ans = ""
 
-def go_selector(study_mode=None):
+def go_selector():
     st.session_state.current_page = "selector"
     st.session_state.answered_state = False
     st.session_state.user_selected_ans = ""
-    if study_mode is not None:
-        st.session_state.study_mode = study_mode
-        st.session_state.selected_tab = 1  # 상세 필터 탭으로 이동
 
 def start_quiz(idx=0, custom_pool=None):
     st.session_state.current_idx = idx
@@ -355,9 +332,12 @@ def start_quiz(idx=0, custom_pool=None):
     st.session_state.user_selected_ans = ""
 
 # -------------------------------------------------------------
-# 4. 상단 네비게이션 헤더 (우상단 별표/오답 클릭 가능 버튼 구현)
+# 4. 상단 네비게이션 헤더 (정답률 배지 적용)
 # -------------------------------------------------------------
-col_h1, col_h2, col_h3 = st.columns([2.8, 3.8, 5.4])
+total_solved = len(st.session_state.correct_ids) + len(st.session_state.wrong_ids)
+accuracy_pct = int((len(st.session_state.correct_ids) / total_solved * 100)) if total_solved > 0 else 0
+
+col_h1, col_h2, col_h3 = st.columns([3, 3.8, 5.2])
 with col_h1:
     if st.button("⚡ Med-Lingo", key="global_home_btn", use_container_width=True):
         go_home()
@@ -370,20 +350,22 @@ with col_h2:
             st.rerun()
 
 with col_h3:
-    c_s1, c_s2, c_s3 = st.columns([1.2, 1.1, 1.1])
-    with c_s1:
-        st.markdown(
-            f"<div style='text-align: center; background: #EEF2FF; color: #4338CA; padding: 10px 4px; border-radius: 12px; font-size: 15px; font-weight: 800; border: 1.5px solid #C7D2FE;'>🔥 {st.session_state.streak}연승</div>",
-            unsafe_allow_html=True
-        )
-    with c_s2:
-        if st.button(f"⭐ {len(st.session_state.starred_ids)}", key="top_nav_star_btn", use_container_width=True):
-            go_selector(study_mode="⭐ 별표 문제만")
-            st.rerun()
-    with c_s3:
-        if st.button(f"❌ {len(st.session_state.wrong_ids)}", key="top_nav_wrong_btn", use_container_width=True):
-            go_selector(study_mode="❌ 오답 문제만")
-            st.rerun()
+    st.markdown(
+        f"""
+        <div style='text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 8px;'>
+            <span style='background: #EEF2FF; color: #4338CA; padding: 7px 14px; border-radius: 12px; font-size: 15px; font-weight: 800; border: 1.5px solid #C7D2FE;'>
+                🎯 정답률 {accuracy_pct}% ({len(st.session_state.correct_ids)}/{total_solved})
+            </span>
+            <span style='background: #FEF3C7; color: #B45309; padding: 7px 14px; border-radius: 12px; font-size: 15px; font-weight: 800; border: 1.5px solid #FDE68A;'>
+                ⭐ {len(st.session_state.starred_ids)}
+            </span>
+            <span style='background: #FEE2E2; color: #B91C1C; padding: 7px 14px; border-radius: 12px; font-size: 15px; font-weight: 800; border: 1.5px solid #FECACA;'>
+                ❌ {len(st.session_state.wrong_ids)}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.markdown("<hr style='margin-top: 10px; margin-bottom: 22px; border-color: #E2E8F0;'>", unsafe_allow_html=True)
 
@@ -444,7 +426,7 @@ if st.session_state.current_page == "home":
     with g1:
         st.markdown("**📁 기출문제 파일별 & 상세 필터**\n\n족보 PDF 파일별 혹은 과목/년도/교수님 조건별로 맞춤형 문항 세트를 구성하여 풀 수 있습니다.")
     with g2:
-        st.markdown("**⭐ 별표 & ❌ 오답 모아 풀기**\n\n상단 우측 버튼을 누르면 틀린 문제와 별표 문제만 즉시 필터링하여 연속으로 풀 수 있습니다.")
+        st.markdown("**🎯 듀오링고식 풀이 & 노스포 스킵**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 모르는 문제는 정답 노출 없이 바로 다음으로 넘길 수 있습니다.")
     with g3:
         st.markdown("**🔄 즉각적인 오답 노트 반영**\n\n풀이 결과에 따라 정답 및 오답이 실시간 집계되며, 표기 차이로 인한 억울한 오답은 '정답 인정' 버튼으로 구제할 수 있습니다.")
 
@@ -574,7 +556,7 @@ elif st.session_state.current_page == "selector":
                 st.rerun()
 
 # -------------------------------------------------------------
-# 7. 화면 3: 문제 풀이 화면 (선지 바로 아래에 위치하도록 원상복구)
+# 7. 화면 3: 문제 풀이 화면
 # -------------------------------------------------------------
 elif st.session_state.current_page == "quiz":
     if st.session_state.active_custom_pool is not None and len(st.session_state.active_custom_pool) > 0:
@@ -715,7 +697,6 @@ elif st.session_state.current_page == "quiz":
             
             if st.button("🙋 맞았는데 틀렸어요! (정답으로 인정)", key="override_btn", use_container_width=True):
                 st.session_state.is_correct = True
-                st.session_state.streak += 1
                 st.session_state.correct_ids.add(q_id)
                 if q_id in st.session_state.wrong_ids:
                     st.session_state.wrong_ids.remove(q_id)
@@ -723,7 +704,7 @@ elif st.session_state.current_page == "quiz":
                 st.rerun()
 
     # -------------------------------------------------------------
-    # 문제 풀이 액션 바 (선지 바로 아래 위치로 원상복구)
+    # 문제 풀이 액션 바 (선지 바로 아래 위치)
     # -------------------------------------------------------------
     st.write("")
     is_last_question = (st.session_state.current_idx >= len(current_active_pool) - 1)
@@ -763,12 +744,10 @@ elif st.session_state.current_page == "quiz":
                 st.session_state.answered_state = True
                 
                 if matched:
-                    st.session_state.streak += 1
                     st.session_state.correct_ids.add(q_id)
                     if q_id in st.session_state.wrong_ids:
                         st.session_state.wrong_ids.remove(q_id)
                 else:
-                    st.session_state.streak = 0
                     st.session_state.wrong_ids.add(q_id)
                 st.rerun()
 
