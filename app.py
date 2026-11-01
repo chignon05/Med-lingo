@@ -24,9 +24,7 @@ st.markdown("""
         background-color: #F8FAFC;
     }
 
-    /* -------------------------------------------------------------
-       1. 상단 네비게이션 버튼 스타일링
-       ------------------------------------------------------------- */
+    /* 1. 상단 네비게이션 버튼 스타일링 */
     div[data-testid="stButton"] > button[key="global_home_btn"],
     div[data-testid="stButton"] > button[key="global_selector_btn"] {
         min-height: 44px !important;
@@ -46,9 +44,7 @@ st.markdown("""
         background-color: #EEF2FF !important;
     }
 
-    /* -------------------------------------------------------------
-       2. 홈 화면 히어로 카드 & 풀러가기 대형 버튼
-       ------------------------------------------------------------- */
+    /* 2. 홈 화면 히어로 카드 & 풀러가기 대형 버튼 */
     .hero-card {
         background: linear-gradient(135deg, #4F46E5 0%, #3B82F6 100%);
         border-radius: 24px;
@@ -108,9 +104,7 @@ st.markdown("""
         color: #64748B;
     }
 
-    /* -------------------------------------------------------------
-       3. 문제 카드 & 버튼 스타일
-       ------------------------------------------------------------- */
+    /* 3. 문제 카드 & 버튼 스타일 */
     div[data-testid="stButton"] > button[key="quiz_back_to_list"],
     div[data-testid="stButton"] > button[key^="quiz_star_"] {
         min-height: 46px !important;
@@ -167,7 +161,7 @@ st.markdown("""
         color: #991B1B;
     }
 
-    /* 선지 라디오 박스 */
+    /* 단일 선택 라디오 박스 */
     div[data-testid="stRadio"] > label {
         display: none !important;
     }
@@ -197,6 +191,27 @@ st.markdown("""
         color: #065F46 !important;
         font-weight: 700 !important;
         box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15) !important;
+    }
+
+    /* 복수 선택 체크박스 카드 스타일링 */
+    div[data-testid="stCheckbox"] {
+        background-color: white !important;
+        border: 2px solid #E2E8F0 !important;
+        border-radius: 14px !important;
+        padding: 14px 18px !important;
+        margin-bottom: 12px !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    }
+    div[data-testid="stCheckbox"]:hover {
+        border-color: #3B82F6 !important;
+        background-color: #F8FAFC !important;
+    }
+    div[data-testid="stCheckbox"]:has(input:checked) {
+        border-color: #3B82F6 !important;
+        background-color: #EFF6FF !important;
+        color: #1E3A8A !important;
+        font-weight: 700 !important;
     }
 
     .choice-card-correct {
@@ -318,10 +333,12 @@ def go_home():
     st.session_state.answered_state = False
     st.session_state.user_selected_ans = ""
 
-def go_selector():
+def go_selector(study_mode=None):
     st.session_state.current_page = "selector"
     st.session_state.answered_state = False
     st.session_state.user_selected_ans = ""
+    if study_mode is not None:
+        st.session_state.study_mode = study_mode
 
 def start_quiz(idx=0, custom_pool=None):
     st.session_state.current_idx = idx
@@ -332,7 +349,7 @@ def start_quiz(idx=0, custom_pool=None):
     st.session_state.user_selected_ans = ""
 
 # -------------------------------------------------------------
-# 4. 상단 네비게이션 헤더 (정답률 배지 적용)
+# 4. 상단 네비게이션 헤더
 # -------------------------------------------------------------
 total_solved = len(st.session_state.correct_ids) + len(st.session_state.wrong_ids)
 accuracy_pct = int((len(st.session_state.correct_ids) / total_solved * 100)) if total_solved > 0 else 0
@@ -426,7 +443,7 @@ if st.session_state.current_page == "home":
     with g1:
         st.markdown("**📁 기출문제 파일별 & 상세 필터**\n\n족보 PDF 파일별 혹은 과목/년도/교수님 조건별로 맞춤형 문항 세트를 구성하여 풀 수 있습니다.")
     with g2:
-        st.markdown("**🎯 듀오링고식 풀이 & 노스포 스킵**\n\n객관식 카드 선지와 유연한 단답형 채점을 지원하며, 모르는 문제는 정답 노출 없이 바로 다음으로 넘길 수 있습니다.")
+        st.markdown("**🎯 단일 및 복수 선택 완벽 지원**\n\n단일 정답은 물론, '두 개 고르시오'와 같은 복수 정답 문항도 체크박스로 자유롭게 선택할 수 있습니다.")
     with g3:
         st.markdown("**🔄 즉각적인 오답 노트 반영**\n\n풀이 결과에 따라 정답 및 오답이 실시간 집계되며, 표기 차이로 인한 억울한 오답은 '정답 인정' 버튼으로 구제할 수 있습니다.")
 
@@ -580,6 +597,11 @@ elif st.session_state.current_page == "quiz":
     q_id = current_q["id"]
     is_starred = q_id in st.session_state.starred_ids
 
+    # 복수 정답 여부 판단 (정답 필드에 쉼표가 있거나 복수 정답 문항인 경우)
+    raw_answer_str = str(current_q.get("answer", "")).strip()
+    is_multiple_choice = ("," in raw_answer_str) or (current_q.get("type") == "multiple_choice")
+    target_answer_tokens = [a.strip() for a in raw_answer_str.split(",") if a.strip()]
+
     # 진행도 게이지
     p_val = (st.session_state.current_idx + 1) / len(current_active_pool)
     st.progress(p_val)
@@ -608,9 +630,10 @@ elif st.session_state.current_page == "quiz":
             st.rerun()
 
     # 문제 카드
+    badge_note = " (복수 선택)" if is_multiple_choice else ""
     st.markdown(f"""
     <div class="question-card">
-        <span class="question-badge">{current_q['year']}년도 | {current_q['professor']} 교수님 | {current_q['subject']}</span>
+        <span class="question-badge">{current_q['year']}년도 | {current_q['professor']} 교수님 | {current_q['subject']}{badge_note}</span>
         <div class="question-text">Q{st.session_state.current_idx + 1}. {current_q['question']}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -623,9 +646,53 @@ elif st.session_state.current_page == "quiz":
         elif isinstance(img_data, str) and os.path.exists(img_data):
             st.image(img_data, use_container_width=True)
 
-    # 답안 입력부
+    # ---------------------------------------------------------
+    # 답안 입력부: 단일 선택 vs 복수 선택 vs 단답형
+    # ---------------------------------------------------------
     user_answer_raw = ""
-    if current_q["type"] == "single_choice":
+    user_answers_multi = []
+
+    # 1) 복수 선택 객관식 (체크박스 제공)
+    if current_q.get("choices") and is_multiple_choice:
+        if not st.session_state.answered_state:
+            st.markdown("<p style='font-weight:700; color:#1E3A8A; font-size:15px; margin-bottom:8px;'>✌️ 해당하는 정답을 모두 선택하세요:</p>", unsafe_allow_html=True)
+            for idx, choice_text in enumerate(current_q["choices"]):
+                c_num = choice_text.strip()[0]
+                chk = st.checkbox(choice_text, key=f"chk_{q_id}_{st.session_state.current_idx}_{idx}")
+                if chk:
+                    user_answers_multi.append(c_num)
+        else:
+            st.markdown("<p style='font-weight:800; color:#1E293B; margin-bottom:12px; font-size:16px;'>📋 전체 선지 및 정답 결과:</p>", unsafe_allow_html=True)
+            user_selected_tokens = [x.strip() for x in str(st.session_state.user_selected_ans).split(",") if x.strip()]
+
+            for choice_text in current_q["choices"]:
+                c_num = choice_text.strip()[0]
+                is_correct_choice = c_num in target_answer_tokens
+                is_user_choice = c_num in user_selected_tokens
+
+                if is_correct_choice:
+                    st.markdown(f"""
+                    <div class="choice-card-correct">
+                        <div>{choice_text}</div>
+                        <span style="background:#2563EB; color:white; font-size:13px; font-weight:700; padding:4px 12px; border-radius:8px; white-space:nowrap; margin-left:12px;">✅ 정답</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif is_user_choice and not is_correct_choice:
+                    st.markdown(f"""
+                    <div class="choice-card-wrong">
+                        <div>{choice_text}</div>
+                        <span style="background:#EF4444; color:white; font-size:13px; font-weight:700; padding:4px 12px; border-radius:8px; white-space:nowrap; margin-left:12px;">❌ 내가 고른 오답</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="choice-card-dimmed">
+                        <div>{choice_text}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+    # 2) 단일 선택 객관식 (라디오 버튼)
+    elif current_q.get("choices") and not is_multiple_choice:
         if not st.session_state.answered_state:
             user_choice = st.radio(
                 "정답을 선택하세요:",
@@ -638,7 +705,7 @@ elif st.session_state.current_page == "quiz":
                 user_answer_raw = user_choice.strip()[0]
         else:
             st.markdown("<p style='font-weight:800; color:#1E293B; margin-bottom:12px; font-size:16px;'>📋 전체 선지 및 정답 결과:</p>", unsafe_allow_html=True)
-            target_ans = str(current_q["answer"]).strip()
+            target_ans = raw_answer_str
             user_ans = str(st.session_state.user_selected_ans).strip()
 
             for choice_text in current_q["choices"]:
@@ -667,7 +734,8 @@ elif st.session_state.current_page == "quiz":
                     </div>
                     """, unsafe_allow_html=True)
 
-    elif current_q["type"] == "short_answer":
+    # 3) 단답형 주관식
+    else:
         if not st.session_state.answered_state:
             user_text = st.text_input(
                 "정답 입력 (단답형):",
@@ -711,7 +779,6 @@ elif st.session_state.current_page == "quiz":
 
     st.markdown('<div class="quiz-action-bar">', unsafe_allow_html=True)
     if not st.session_state.answered_state:
-        # 풀기 전: [이전] / [그냥 다음(스킵)] / [정답 확인]
         btn_col1, btn_col2, btn_col3 = st.columns([3, 4, 4])
         with btn_col1:
             if st.button("⬅️ 이전", disabled=(st.session_state.current_idx == 0), use_container_width=True):
@@ -729,27 +796,50 @@ elif st.session_state.current_page == "quiz":
             check_btn = st.button("정답 확인 ✔️", type="primary", use_container_width=True)
 
         if check_btn:
-            if not user_answer_raw:
-                st.warning("답안을 먼저 선택하거나 입력해 주세요!")
-            else:
-                st.session_state.user_selected_ans = user_answer_raw
-                correct_ans = str(current_q["answer"]).strip()
-                
-                if current_q["type"] == "single_choice":
-                    matched = (user_answer_raw == correct_ans)
+            # 복수 선택형인 경우
+            if is_multiple_choice and current_q.get("choices"):
+                if not user_answers_multi:
+                    st.warning("최소 하나 이상의 답안을 선택해 주세요!")
                 else:
-                    matched = check_short_answer(user_answer_raw, correct_ans)
+                    sorted_user = sorted(user_answers_multi)
+                    sorted_target = sorted(target_answer_tokens)
+                    st.session_state.user_selected_ans = ", ".join(sorted_user)
                     
-                st.session_state.is_correct = matched
-                st.session_state.answered_state = True
-                
-                if matched:
-                    st.session_state.correct_ids.add(q_id)
-                    if q_id in st.session_state.wrong_ids:
-                        st.session_state.wrong_ids.remove(q_id)
+                    matched = (sorted_user == sorted_target)
+                    st.session_state.is_correct = matched
+                    st.session_state.answered_state = True
+                    
+                    if matched:
+                        st.session_state.correct_ids.add(q_id)
+                        if q_id in st.session_state.wrong_ids:
+                            st.session_state.wrong_ids.remove(q_id)
+                    else:
+                        st.session_state.wrong_ids.add(q_id)
+                    st.rerun()
+
+            # 단일 선택 및 단답형인 경우
+            else:
+                if not user_answer_raw:
+                    st.warning("답안을 먼저 선택하거나 입력해 주세요!")
                 else:
-                    st.session_state.wrong_ids.add(q_id)
-                st.rerun()
+                    st.session_state.user_selected_ans = user_answer_raw
+                    correct_ans = str(current_q["answer"]).strip()
+                    
+                    if current_q.get("choices"):
+                        matched = (user_answer_raw == correct_ans)
+                    else:
+                        matched = check_short_answer(user_answer_raw, correct_ans)
+                        
+                    st.session_state.is_correct = matched
+                    st.session_state.answered_state = True
+                    
+                    if matched:
+                        st.session_state.correct_ids.add(q_id)
+                        if q_id in st.session_state.wrong_ids:
+                            st.session_state.wrong_ids.remove(q_id)
+                    else:
+                        st.session_state.wrong_ids.add(q_id)
+                    st.rerun()
 
     else:
         # 정답 확인 후: [이전 문제] / [다음 문제 or 풀이 완료]
